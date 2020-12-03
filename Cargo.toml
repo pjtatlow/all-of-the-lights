@@ -1,0 +1,16 @@
+[package]
+name = "all-of-the-lights"
+version = "0.1.0"
+authors = ["PJ Tatlow <pjt@qualtrics.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "3"
+lazy_static = "1.4"
+serde = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+serde_json = "1.0"
+colourado = "0.2"
+blinkt = "0.5"

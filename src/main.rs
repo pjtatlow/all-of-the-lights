@@ -4,7 +4,6 @@ extern crate lazy_static;
 use actix_web::{post, web, App, HttpServer, Responder};
 use blinkt::Blinkt;
 use chrono::{offset::Utc, DateTime};
-use colourado::{Color, ColorPalette, PaletteType};
 use serde::{Deserialize, Serialize};
 use std::sync::{mpsc::channel, Arc, Mutex};
 use std::thread;
@@ -15,8 +14,12 @@ lazy_static! {
     static ref CHANGE_FLAG: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Copy, Clone)]
 struct LightConfig {
+    red: u8,
+    green: u8,
+    blue: u8,
+    brightness: f32,
     end: DateTime<Utc>,
 }
 
@@ -36,30 +39,20 @@ async fn index(config: web::Json<Vec<LightConfig>>) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let (sender, receiver) = channel::<u32>();
-    std::thread::spawn(move || match Blinkt::new().unwrap() {
+    let (sender, receiver) = channel::<LightConfig>();
+    std::thread::spawn(move || match Blinkt::new() {
         Ok(mut blinkt) => loop {
             let spacing = 360.0 / 16.0;
 
             match receiver.recv() {
-                Ok(_) => {
-                    let end = Utc::now() + chrono::Duration::seconds(5);
-                    while Utc::now() < end {
-                        let hue = (Utc::now().timestamp_millis() % 360) as f32;
-                        for x in 0..8 {
-                            let offset = (x as f32) * spacing;
-                            let h = ((hue + offset) % 360.0) / 360.0;
-                            let color = Color::hsv_to_rgb(h, 1.0, 1.0);
-                            blinkt.set_pixel(
-                                x as usize,
-                                (color.red * 255) as u8,
-                                (color.green * 255) as u8,
-                                (color.blue * 255) as u8,
-                            );
-                        }
-                        blinkt.show();
-                        thread::sleep_ms(1);
-                    }
+                Ok(config) => {
+                    blinkt.set_all_pixels_rgbb(
+                        config.red,
+                        config.green,
+                        config.blue,
+                        config.brightness,
+                    );
+                    blinkt.show();
                 }
                 Err(_) => (),
             }
@@ -93,7 +86,7 @@ async fn main() -> std::io::Result<()> {
                 if let Some(val) = vals.pop() {
                     println!("NEW {:?}", val);
                     current = Some(val);
-                    sender.send(1);
+                    let _ = sender.send(val);
                 } else {
                     println!("NOTHING");
                 }

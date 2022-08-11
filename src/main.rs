@@ -129,7 +129,7 @@ async fn main() -> std::io::Result<()> {
                 let mut vals = LIGHTS.lock().unwrap();
                 if let Some(val) = vals.pop() {
                     let next = val;
-                    next.end = next.end + Duration::from_secs(60 * 60 * 24);
+                    next.end = next.end + chrono::Duration::from_secs(60 * 60 * 24);
                     vals.push(next);
                     // println!("NEW {:?}", val);
                     current = Some(val);

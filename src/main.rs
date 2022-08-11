@@ -48,8 +48,8 @@ struct Pixel {
 async fn index_post(body: web::Json<Body>) -> impl Responder {
     let mut vals = LIGHTS.lock().unwrap();
     vals.clear();
-    for config in body.config {
-        vals.push_back(config);
+    for config in &body.config {
+        vals.push_back(*config);
     }
     let mut flag = CHANGE_FLAG.lock().unwrap();
     *flag = true;

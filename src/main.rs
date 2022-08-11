@@ -43,7 +43,7 @@ struct Pixel {
 }
 
 #[post("/")]
-async fn index(body: web::Json<Body>) -> impl Responder {
+async fn index_post(body: web::Json<Body>) -> impl Responder {
     let mut vals = LIGHTS.lock().unwrap();
     vals.clear();
     body.0.config.into_iter().rev().for_each(|v| {
@@ -54,6 +54,12 @@ async fn index(body: web::Json<Body>) -> impl Responder {
     let mut flag = CHANGE_FLAG.lock().unwrap();
     *flag = true;
     format!("Your wish is my command")
+}
+
+#[get("/")]
+async fn index_get() -> impl Responder {
+    let vals = LIGHTS.lock().unwrap();
+    web::Json(vals.clone())
 }
 
 #[actix_web::main]
@@ -141,7 +147,7 @@ async fn main() -> std::io::Result<()> {
             thread::sleep(Duration::from_secs(1))
         }
     });
-    HttpServer::new(|| App::new().service(index))
+    HttpServer::new(|| App::new().service(index_post).service(index_get))
         .bind("0.0.0.0:8080")?
         .run()
         .await

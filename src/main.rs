@@ -5,12 +5,14 @@ use actix_web::{get, post, web, App, HttpServer, Responder};
 use blinkt::Blinkt;
 use chrono::{offset::Utc, DateTime};
 use serde::{Deserialize, Serialize};
+use std::collections::LinkedList;
 use std::sync::{mpsc::channel, Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
 lazy_static! {
-    static ref LIGHTS: Arc<Mutex<Vec<LightConfig>>> = Arc::new(Mutex::new(Vec::new()));
+    static ref LIGHTS: Arc<Mutex<LinkedList<LightConfig>>> =
+        Arc::new(Mutex::new(LinkedList::new()));
     static ref CHANGE_FLAG: Arc<Mutex<bool>> = Arc::new(Mutex::new(false));
 }
 
@@ -46,11 +48,9 @@ struct Pixel {
 async fn index_post(body: web::Json<Body>) -> impl Responder {
     let mut vals = LIGHTS.lock().unwrap();
     vals.clear();
-    body.0.config.into_iter().rev().for_each(|v| {
-        if v.end > Utc::now() {
-            vals.push(v)
-        }
-    });
+    for config in body.config {
+        vals.push_back(config);
+    }
     let mut flag = CHANGE_FLAG.lock().unwrap();
     *flag = true;
     format!("Your wish is my command")
@@ -133,10 +133,10 @@ async fn main() -> std::io::Result<()> {
                 }
             } else {
                 let mut vals = LIGHTS.lock().unwrap();
-                if let Some(val) = vals.pop() {
-                    let mut next = val;
+                if let Some(val) = vals.pop_front() {
+                    let mut next = val.clone();
                     next.end = next.end + chrono::Duration::days(1);
-                    vals.push(next);
+                    vals.push_back(next);
                     // println!("NEW {:?}", val);
                     current = Some(val);
                     let _ = sender.send(val);

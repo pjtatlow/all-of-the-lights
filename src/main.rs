@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate lazy_static;
 
-use actix_web::{post, web, App, HttpServer, Responder};
+use actix_web::{get, post, web, App, HttpServer, Responder};
 use blinkt::Blinkt;
 use chrono::{offset::Utc, DateTime};
 use serde::{Deserialize, Serialize};

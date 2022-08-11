@@ -128,7 +128,7 @@ async fn main() -> std::io::Result<()> {
             } else {
                 let mut vals = LIGHTS.lock().unwrap();
                 if let Some(val) = vals.pop() {
-                    let next = val;
+                    let mut next = val;
                     next.end = next.end + chrono::Duration::days(1);
                     vals.push(next);
                     // println!("NEW {:?}", val);

@@ -128,6 +128,9 @@ async fn main() -> std::io::Result<()> {
             } else {
                 let mut vals = LIGHTS.lock().unwrap();
                 if let Some(val) = vals.pop() {
+                    let next = val;
+                    next.end = next.end + Duration::from_secs(60 * 60 * 24);
+                    vals.push(next);
                     // println!("NEW {:?}", val);
                     current = Some(val);
                     let _ = sender.send(val);
